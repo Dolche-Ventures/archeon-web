@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Archeon — Data Maturity Assessment</title>
+
+  <!--
+  ================================================================
+  CONFIGURATION — swap these two constants before going live
+  ================================================================
+  -->
+  <script>
+    // ── Supabase ─────────────────────────────────────────────────
+    // Replace with your project values from:
+    // Supabase Dashboard → Settings → API
+    const SUPABASE_URL = 'https://isyygjaviypkemhgquhj.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeXlnamF2aXlwa2VtaGdxdWhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MjU3NzQsImV4cCI6MjA4NjUwMTc3NH0.OJs-ppULDuUWABE6mY143o6jYpacw1SCGsIw0K4SpkE';
+
+    // ── n8n / webhook ─────────────────────────────────────────────
+    // Replace with your real workflow webhook URL
+    const WEBHOOK_URL = 'https://api.dolche.ventures/webhook/archeon-quiz';
+  </script>
+
+  <style>
+    /* ============================================================
+       DESIGN TOKENS - Matching Archeon Website
+       ============================================================ */
+    :root {
+      /* Backgrounds */
+      --color-bg: #0a0a0a;
+      /* Dark background matching site */
+      --color-surface: #1a1a1a;
+      /* Slightly lighter for cards */
+      --color-surface-hover: #262626;
+      /* Hover state */
+      --color-surface-active: #2a2a2a;
+      /* Active/selected state */
+
+      /* Borders */
+      --color-border: #404040;
+      /* Default border - mid grey */
+      --color-border-active: #18181B;
+      /* Dark grey for selected option */
+
+      /* Text */
+      --color-text-primary: #fafafa;
+      /* Primary text - white */
+      --color-text-secondary: #a3a3a3;
+      /* Secondary text - muted */
+      --color-text-muted: #737373;
+      /* Muted text */
+
+      /* Accent - Dark grey */
+      --color-accent: #18181B;
+      /* Dark grey */
+      --color-accent-hover: #404040;
+      /* Mid grey */
+      --color-accent-glow: rgba(100, 100, 100, 0.18);
+      /* Visible grey glow */
+
+      /* Status indicators */
+      --color-status-green: #22C55E;
+      --color-status-yellow: #EAB308;
+      --color-status-red: #EF4444;
+      --color-status-neutral: #6B7280;
+
+      /* Typography - Matching site */
+      --font-heading: 'Geist', system-ui, -apple-system, sans-serif;
+      --font-body: 'Geist', system-ui, -apple-system, sans-serif;
+
+      /* Layout */
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --transition: 280ms ease-out;
+    }
+
+    /* Light mode support */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --color-bg: #fafafa;
+        --color-surface: #ffffff;
+        --color-surface-hover: #f5f5f5;
+        --color-surface-active: #ebebeb;
+        --color-border: #e5e5e5;
+        --color-text-primary: #171717;
+        --color-text-secondary: #525252;
+        --color-text-muted: #a3a3a3;
+      }
+    }
+
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow-x: hidden;
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      font-family: var(--font-body);
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ============================================================
+       MAIN CONTAINER - Fits inside site frame
+    ============================================================ */
+    .quiz-container {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* ============================================================
+       PROGRESS BAR
+    ============================================================ */
+    #progress-track {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--color-border);
+      z-index: 100;
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+
+    #progress-track.visible {
+      opacity: 1;
+    }
+
+    #progress-fill {
+      height: 100%;
+      background: var(--color-accent);
+      width: 0%;
+      transition: width 320ms ease-out;
+    }
+
+    /* ============================================================
+       STAGE CONTAINER
+    ============================================================ */
+    #stage {
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      overflow-y: auto;
+    }
+
+    /* ============================================================
+       SCREEN BASE
+       All screens share this — absolutely stacked, transitions
+       handle visibility.
+    ============================================================ */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 48px 24px 64px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(40px);
+      transition:
+        opacity var(--transition),
+        transform var(--transition);
+      overflow-y: auto;
+    }
+
+    .screen.active {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateX(0);
+    }
+
+    .screen.exit-left {
+      opacity: 0;
+      transform: translateX(-40px);
+      pointer-events: none;
+    }
+
+    .screen.enter-right {
+      opacity: 0;
+      transform: translateX(40px);
+      pointer-events: none;
+    }
+
+    .screen.enter-left {
+      opacity: 0;
+      transform: translateX(-40px);
+      pointer-events: none;
+    }
+
+    .screen.exit-right {
+      opacity: 0;
+      transform: translateX(40px);
+      pointer-events: none;
+    }
+
+    /* ============================================================
+       INNER CARD — max-width container inside each screen
+    ============================================================ */
+    .card {
+      width: 100%;
+      max-width: 640px;
+    }
+
+    /* ============================================================
+       TYPOGRAPHY UTILITIES
+    ============================================================ */
+    .label-step {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-accent);
+      margin-bottom: 20px;
+    }
+
+    .heading-xl {
+      font-family: var(--font-heading);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--color-text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .heading-lg {
+      font-family: var(--font-heading);
+      font-size: clamp(1.35rem, 3vw, 1.875rem);
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--color-text-primary);
+      letter-spacing: -0.015em;
+    }
+
+    .subheading {
+      font-size: 1rem;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+      margin-top: 14px;
+    }
+
+    .subheading-provocative {
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+      font-style: italic;
+      margin-top: 8px;
+      margin-bottom: 28px;
+    }
+
+    /* ============================================================
+       BUTTONS
+    ============================================================ */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 32px;
+      padding: 15px 28px;
+      background: var(--color-accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition), transform 120ms ease, box-shadow var(--transition);
+      outline: none;
+    }
+
+    .btn-primary:hover {
+      background: var(--color-accent-hover);
+      box-shadow: 0 0 0 8px var(--color-accent-glow);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      color: var(--color-text-muted);
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      cursor: pointer;
+      padding: 8px 0;
+      margin-bottom: 28px;
+      transition: color var(--transition);
+      outline: none;
+    }
+
+    .btn-back:hover {
+      color: var(--color-text-secondary);
+    }
+
+    .btn-back svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    /* ============================================================
+       OPTION TILES — single-select & multi-select
+    ============================================================ */
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .option-tile {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-surface);
+      color: var(--color-text-primary);
+      font-family: var(--font-body);
+      font-size: 0.9375rem;
+      cursor: pointer;
+      transition:
+        border-color var(--transition),
+        background var(--transition),
+        box-shadow var(--transition);
+      text-align: left;
+      width: 100%;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .option-tile:hover {
+      border-color: var(--color-border-active);
+      background: var(--color-surface-hover);
+    }
+
+    .option-tile.selected {
+      border-color: var(--color-border-active);
+      background: var(--color-surface-active);
+      box-shadow: 0 0 0 4px var(--color-accent-glow);
+    }
+
+    /* Status dot on Q1 */
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot-green {
+      background: var(--color-status-green);
+    }
+
+    .dot-yellow {
+      background: var(--color-status-yellow);
+    }
+
+    .dot-red {
+      background: var(--color-status-red);
+    }
+
+    .dot-neutral {
+      background: var(--color-status-neutral);
+    }
+
+    /* Multi-select checkbox indicator */
+    .checkbox {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1.5px solid var(--color-border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color var(--transition), background var(--transition);
+    }
+
+    .option-tile.selected .checkbox {
+      border-color: var(--color-accent);
+      background: var(--color-accent);
+    }
+
+    .checkbox svg {
+      opacity: 0;
+      transition: opacity 150ms ease;
+    }
+
+    .option-tile.selected .checkbox svg {
+      opacity: 1;
+    }
+
+    /* ============================================================
+       CAPTURE FORM
+    ============================================================ */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .form-input {
+      padding: 14px 18px;
+      background: var(--color-surface);
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-md);
+      color: var(--color-text-primary);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .form-input::placeholder {
+      color: var(--color-text-muted);
+    }
+
+    .form-input:focus {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 4px var(--color-accent-glow);
+    }
+
+    .form-input.error {
+      border-color: var(--color-status-red);
+    }
+
+    .fine-print {
+      font-size: 0.78rem;
+      color: var(--color-text-muted);
+      line-height: 1.5;
+      margin-top: 14px;
+    }
+
+    .error-msg {
+      font-size: 0.82rem;
+      color: var(--color-status-red);
+      margin-top: -4px;
+      display: none;
+    }
+
+    .error-msg.visible {
+      display: block;
+    }
+
+    /* ============================================================
+       THANK YOU — geometric accent
+    ============================================================ */
+    .geo-accent {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 28px;
+      flex-shrink: 0;
+    }
+
+    .thankyou-link {
+      color: var(--color-accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+    }
+
+    /* ============================================================
+       INTRO — decorative wordmark
+    ============================================================ */
+    .brand-mark {
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin-bottom: 40px;
+    }
+
+    .divider {
+      width: 40px;
+      height: 2px;
+      background: var(--color-accent);
+      margin: 28px 0;
+    }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 480px) {
+      .screen {
+        padding: 24px 18px;
+      }
+
+      .btn-primary {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .heading-xl {
+        font-size: 1.6rem;
+      }
+
+      .heading-lg {
+        font-size: 1.25rem;
+      }
+    }
+
+    /* Scrollable on small screens when options overflow */
+    @media (max-height: 600px) {
+      .screen {
+        justify-content: flex-start;
+        padding-top: 48px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Progress bar -->
+  <div id="progress-track">
+    <div id="progress-fill"></div>
+  </div>
+
+  <!-- Quiz Container -->
+  <div class="quiz-container">
+
+  <!-- Stage: all screens live here -->
+  <div id="stage">
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 0 — INTRO
+    ══════════════════════════════════════════════ -->
+    <div class="screen active" id="screen-intro">
+      <div class="card">
+        <div class="brand-mark">Archeon</div>
+        <h1 class="heading-xl">Your data is either working for you — or against you. Let's find out which.</h1>
+        <div class="divider"></div>
+        <p class="subheading">Answer 6 honest questions. We'll send you a real assessment of where your business stands.
+          No fluff. No sales pitch disguised as advice.</p>
+        <button class="btn-primary" onclick="goTo(1, 'forward')">
+          Find out where I stand
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 1 — Q1: Data Structure
+    ══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-1">
+      <div class="card">
+        <button class="btn-back" onclick="goTo(0, 'back')">
+          <svg viewBox="0 0 14 14" fill="none">
+            <path d="M11 7H3M6 3L2 7l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Back
+        </button>
+        <div class="label-step">Question 1 of 6</div>
+        <h2 class="heading-lg">How would you honestly describe the state of your business data right now?</h2>
+        <p class="subheading-provocative">Be brutal. We've seen it all.</p>
+        <div class="options-list" id="q1-options">
+          <button class="option-tile" data-value="Clean, structured and accessible across the team"
+            onclick="selectSingle('q1', this, 2, 'forward')">
+            <span class="dot dot-green"></span>
+            It's clean, structured and accessible across the team
+          </button>
+          <button class="option-tile" data-value="Scattered across tools, spreadsheets and people's heads"
+            onclick="selectSingle('q1', this, 2, 'forward')">
+            <span class="dot dot-yellow"></span>
+            It exists, but it's scattered across tools, spreadsheets and people's heads
+          </button>
+          <button class="option-tile" data-value="A mess and we know it"
+            onclick="selectSingle('q1', this, 2, 'forward')">
+            <span class="dot dot-red"></span>
+            It's a mess and we know it
+          </button>
+          <button class="option-tile" data-value="Not sure" onclick="selectSingle('q1', this, 2, 'forward')">
+            <span class="dot dot-neutral"></span>
+            Honestly, I'm not even sure
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 2 — Q2: Consultant History
+    ══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-2">
+      <div class="card">
+        <button class="btn-back" onclick="goTo(1, 'back')">
+          <svg viewBox="0 0 14 14" fill="none">
+            <path d="M11 7H3M6 3L2 7l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Back
+        </button>
+        <div class="label-step">Question 2 of 6</div>
+        <h2 class="heading-lg">Have you worked with data or tech consultants before?</h2>
+        <p class="subheading-provocative">No judgment. Actually, maybe a little.</p>
+        <div class="options-list" id="q2-options">
+          <button class="option-tile" data-value="Yes — and it went well"
+            onclick="selectSingle('q2', this, 3, 'forward')">
+            Yes — and it went well
+          </button>
+          <button class="option-tile" data-value="Yes — and it was a painful, expensive lesson"
+            onclick="selectSingle('q2', this, 3, 'forward')">
+            Yes — and it was a painful, expensive lesson
+          </button>
+          <button class="option-tile" data-value="No — we've handled everything in-house"
+            onclick="selectSingle('q2', this, 3, 'forward')">
+            No — we've handled everything in-house
+          </button>
+          <button class="option-tile" data-value="No — we didn't think we needed it (until now)"
+            onclick="selectSingle('q2', this, 3, 'forward')">
+            No — we didn't think we needed it (until now)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 3 — Q3: Tech Stack (multi-select)
+    ══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-3">
+      <div class="card">
+        <button class="btn-back" onclick="goTo(2, 'back')">
+          <svg viewBox="0 0 14 14" fill="none">
+            <path d="M11 7H3M6 3L2 7l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Back
+        </button>
+        <div class="label-step">Question 3 of 6</div>
+        <h2 class="heading-lg">Which of these are part of your current setup? Pick everything that applies.</h2>
+        <p class="subheading-provocative">Your stack tells us more about your data problems than you think.</p>
+        <div class="options-list" id="q3-options">
+          <button class="option-tile" data-value="ERP system" onclick="toggleMulti('q3', this)">
+            <span class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                <path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.6" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg></span>
+            ERP system (SAP, Oracle, Business Central, etc.)
+          </button>
+          <button class="option-tile" data-value="BI / Visualisation tool" onclick="toggleMulti('q3', this)">
+            <span class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                <path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.6" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg></span>
+            BI / Visualisation tool (Power BI, Tableau, Looker, etc.)
+          </button>
+          <button class="option-tile" data-value="CRM" onclick="toggleMulti('q3', this)">
+            <span class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                <path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.6" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg></span>
+            CRM (Salesforce, HubSpot, etc.)
+          </button>
+          <button class="option-tile" data-value="Cloud data platform" onclick="toggleMulti('q3', this)">
+            <span class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                <path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.6" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg></span>
+            Cloud data platform (Snowflake, Databricks, BigQuery, etc.)
+          </button>
+          <button class="option-tile" data-value="Custom-built internal tools" onclick="toggleMulti('q3', this)">
+            <span class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                <path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.6" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg></span>
+            Custom-built internal tools
+          </button>
+          <button class="option-tile" data-value="Mostly spreadsheets" onclick="toggleMulti('q3', this)">
+            <span class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                <path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.6" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg></span>
+            Mostly spreadsheets
+          </button>
+          <button class="option-tile" data-value="None of the above" onclick="toggleMulti('q3', this)">
+            <span class="checkbox"><svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                <path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.6" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg></span>
+            None of the above
+          </button>
+        </div>
+        <button class="btn-primary" id="q3-continue" onclick="continueMulti(4)" disabled>
+          Continue
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 4 — Q4: Data Usage
+    ══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-4">
+      <div class="card">
+        <button class="btn-back" onclick="goTo(3, 'back')">
+          <svg viewBox="0 0 14 14" fill="none">
+            <path d="M11 7H3M6 3L2 7l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Back
+        </button>
+        <div class="label-step">Question 4 of 6</div>
+        <h2 class="heading-lg">When your leadership team makes a big decision, what are they actually relying on?</h2>
+        <p class="subheading-provocative">This one stings for most businesses.</p>
+        <div class="options-list" id="q4-options">
+          <button class="option-tile" data-value="Real-time data dashboards — decisions are data-driven"
+            onclick="selectSingle('q4', this, 5, 'forward')">
+            Real-time data dashboards — decisions are data-driven
+          </button>
+          <button class="option-tile" data-value="Reports, but usually a week old by the time we see them"
+            onclick="selectSingle('q4', this, 5, 'forward')">
+            Reports, but they're usually a week old by the time we see them
+          </button>
+          <button class="option-tile" data-value="A mix of data and gut feeling, mostly gut feeling"
+            onclick="selectSingle('q4', this, 5, 'forward')">
+            A mix of data and gut feeling, mostly gut feeling
+          </button>
+          <button class="option-tile" data-value="Whoever speaks loudest in the room"
+            onclick="selectSingle('q4', this, 5, 'forward')">
+            Whoever speaks loudest in the room
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 5 — Q5: AI & Automation
+    ══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-5">
+      <div class="card">
+        <button class="btn-back" onclick="goTo(4, 'back')">
+          <svg viewBox="0 0 14 14" fill="none">
+            <path d="M11 7H3M6 3L2 7l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Back
+        </button>
+        <div class="label-step">Question 5 of 6</div>
+        <h2 class="heading-lg">Is AI doing any real work inside your business right now?</h2>
+        <p class="subheading-provocative">Your competitors are asking the same question — and some of them already have
+          an answer.</p>
+        <div class="options-list" id="q5-options">
+          <button class="option-tile" data-value="Yes — we have live automations or AI-driven processes"
+            onclick="selectSingle('q5', this, 6, 'forward')">
+            Yes — we have live automations or AI-driven processes
+          </button>
+          <button class="option-tile" data-value="We're experimenting but nothing serious yet"
+            onclick="selectSingle('q5', this, 6, 'forward')">
+            We're experimenting but nothing serious yet
+          </button>
+          <button class="option-tile" data-value="We've talked about it a lot, done nothing about it"
+            onclick="selectSingle('q5', this, 6, 'forward')">
+            We've talked about it a lot, done nothing about it
+          </button>
+          <button class="option-tile" data-value="No — and honestly we're not sure where to start"
+            onclick="selectSingle('q5', this, 6, 'forward')">
+            No — and honestly we're not sure where to start
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 6 — Q6: Priority
+    ══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-6">
+      <div class="card">
+        <button class="btn-back" onclick="goTo(5, 'back')">
+          <svg viewBox="0 0 14 14" fill="none">
+            <path d="M11 7H3M6 3L2 7l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Back
+        </button>
+        <div class="label-step">Question 6 of 6</div>
+        <h2 class="heading-lg">If you could fix one thing about your data situation in the next 90 days, what would it
+          be?</h2>
+        <p class="subheading-provocative">This tells us exactly where to focus.</p>
+        <div class="options-list" id="q6-options">
+          <button class="option-tile" data-value="Get a single source of truth — one place for all our data"
+            onclick="selectSingle('q6', this, 7, 'forward')">
+            Get a single source of truth — one place for all our data
+          </button>
+          <button class="option-tile" data-value="Build dashboards our team will actually use"
+            onclick="selectSingle('q6', this, 7, 'forward')">
+            Build dashboards our team will actually use
+          </button>
+          <button class="option-tile" data-value="Automate the manual, repetitive data work"
+            onclick="selectSingle('q6', this, 7, 'forward')">
+            Automate the manual, repetitive data work
+          </button>
+          <button class="option-tile" data-value="Fix our ERP or migrate to a better system"
+            onclick="selectSingle('q6', this, 7, 'forward')">
+            Fix our ERP or migrate to a better system
+          </button>
+          <button class="option-tile" data-value="Understand what AI could realistically do for us"
+            onclick="selectSingle('q6', this, 7, 'forward')">
+            Understand what AI could realistically do for us
+          </button>
+          <button class="option-tile" data-value="All of it. Yesterday."
+            onclick="selectSingle('q6', this, 7, 'forward')">
+            All of it. Yesterday.
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 7 — CAPTURE
+    ══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-7">
+      <div class="card">
+        <button class="btn-back" onclick="goTo(6, 'back')">
+          <svg viewBox="0 0 14 14" fill="none">
+            <path d="M11 7H3M6 3L2 7l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Back
+        </button>
+        <h2 class="heading-lg">You're closer to clarity than you think.</h2>
+        <p class="subheading">Drop your details and we'll send you a personalised assessment of your data maturity —
+          written by our team, informed by your answers. Straight to your inbox.</p>
+        <div class="form-group">
+          <input class="form-input" type="text" id="field-name" placeholder="Full name" autocomplete="name" />
+          <span class="error-msg" id="err-name">Please enter your full name.</span>
+          <input class="form-input" type="text" id="field-business" placeholder="Business name"
+            autocomplete="organization" />
+          <span class="error-msg" id="err-business">Please enter your business name.</span>
+          <input class="form-input" type="email" id="field-email" placeholder="Work email" autocomplete="email" />
+          <span class="error-msg" id="err-email">Please enter a valid work email.</span>
+        </div>
+        <button class="btn-primary" id="submit-btn" onclick="submitForm()">
+          Send me my assessment
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+        <p class="fine-print">No spam. No generic PDFs. Just an honest look at where you stand and what's actually
+          possible.</p>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN 8 — THANK YOU
+    ══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-8">
+      <div class="card" style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+        <!-- Geometric accent: animated square rotated 45° -->
+        <svg class="geo-accent" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="8" width="48" height="48" rx="4" stroke="var(--color-accent)" stroke-width="1.5"
+            transform="rotate(45 32 32)" stroke-dasharray="135" stroke-dashoffset="135">
+            <animate attributeName="stroke-dashoffset" from="135" to="0" dur="0.8s" fill="freeze" begin="0.2s" />
+          </rect>
+          <circle cx="32" cy="32" r="4" fill="var(--color-accent)">
+            <animate attributeName="opacity" from="0" to="1" dur="0.3s" fill="freeze" begin="0.9s" />
+          </circle>
+        </svg>
+        <h1 class="heading-xl">We're on it.</h1>
+        <p class="subheading" style="max-width: 460px;">
+          Your assessment is being prepared. Expect something worth reading in your inbox shortly.
+          <br><br>
+          In the meantime — if your data situation is urgent,
+          <a href="https://archeon.com.au" class="thankyou-link">book a call with us</a>.
+        </p>
+      </div>
+    </div>
+
+  </div><!-- /stage -->
+
+  </div><!-- /quiz-container -->
+
+  <script>
+    // ============================================================
+    // STATE
+    // ============================================================
+    const answers = {
+      q1: null,
+      q2: null,
+      q3: [],   // multi-select
+      q4: null,
+      q5: null,
+      q6: null,
+    };
+
+    const TOTAL_QUESTIONS = 6; // for progress bar calculation
+    let currentScreen = 0;
+
+    // ============================================================
+    // SCREEN TRANSITIONS
+    // direction: 'forward' | 'back'
+    // ============================================================
+    function goTo(targetIndex, direction) {
+      const current = document.getElementById(screenId(currentScreen));
+      const target = document.getElementById(screenId(targetIndex));
+
+      if (!current || !target) return;
+
+      const exitClass = direction === 'forward' ? 'exit-left' : 'exit-right';
+      const enterClass = direction === 'forward' ? 'enter-right' : 'enter-left';
+
+      // Set enter position before making active (no flash)
+      target.classList.remove('active', 'exit-left', 'exit-right', 'enter-right', 'enter-left');
+      target.classList.add(enterClass);
+
+      // Force reflow so the browser registers the start position
+      void target.offsetWidth;
+
+      // Exit current
+      current.classList.remove('active');
+      current.classList.add(exitClass);
+
+      // Enter target
+      target.classList.remove(enterClass);
+      target.classList.add('active');
+
+      currentScreen = targetIndex;
+      updateProgress();
+
+      // Clean up exit class after animation completes
+      setTimeout(() => {
+        current.classList.remove(exitClass);
+      }, 300);
+    }
+
+    function screenId(index) {
+      if (index === 0) return 'screen-intro';
+      if (index === 7) return 'screen-7';
+      if (index === 8) return 'screen-8';
+      return `screen-${index}`;
+    }
+
+    // ============================================================
+    // PROGRESS BAR
+    // ============================================================
+    function updateProgress() {
+      const track = document.getElementById('progress-track');
+      const fill = document.getElementById('progress-fill');
+
+      // Only show during Q1–Q6 (screens 1–6)
+      if (currentScreen >= 1 && currentScreen <= 6) {
+        track.classList.add('visible');
+        const pct = (currentScreen / TOTAL_QUESTIONS) * 100;
+        fill.style.width = pct + '%';
+      } else {
+        track.classList.remove('visible');
+        fill.style.width = '0%';
+      }
+    }
+
+    // ============================================================
+    // SINGLE SELECT
+    // Selects an option, stores answer, auto-advances
+    // ============================================================
+    function selectSingle(questionKey, tileEl, nextScreen, direction) {
+      // Deselect siblings
+      const parent = tileEl.closest('.options-list');
+      parent.querySelectorAll('.option-tile').forEach(t => t.classList.remove('selected'));
+
+      // Select this tile
+      tileEl.classList.add('selected');
+
+      // Store answer
+      answers[questionKey] = tileEl.dataset.value;
+
+      // Small delay so the user sees their selection before advancing
+      setTimeout(() => goTo(nextScreen, direction), 220);
+    }
+
+    // ============================================================
+    // MULTI SELECT (Q3)
+    // ============================================================
+    function toggleMulti(questionKey, tileEl) {
+      const value = tileEl.dataset.value;
+
+      if (value === 'None of the above') {
+        // Selecting "None" deselects everything else
+        const parent = tileEl.closest('.options-list');
+        parent.querySelectorAll('.option-tile').forEach(t => t.classList.remove('selected'));
+        tileEl.classList.add('selected');
+        answers[questionKey] = ['None of the above'];
+      } else {
+        // Deselect "None of the above" if it was selected
+        const parent = tileEl.closest('.options-list');
+        const noneBtn = parent.querySelector('[data-value="None of the above"]');
+        if (noneBtn) noneBtn.classList.remove('selected');
+
+        // Toggle this tile
+        tileEl.classList.toggle('selected');
+
+        // Rebuild array from DOM state
+        const selected = Array.from(
+          parent.querySelectorAll('.option-tile.selected')
+        ).map(t => t.dataset.value);
+        answers[questionKey] = selected;
+      }
+
+      // Enable/disable continue button
+      const continueBtn = document.getElementById('q3-continue');
+      continueBtn.disabled = answers[questionKey].length === 0;
+    }
+
+    function continueMulti(nextScreen) {
+      if (answers.q3.length === 0) return;
+      goTo(nextScreen, 'forward');
+    }
+
+    // ============================================================
+    // FORM VALIDATION
+    // ============================================================
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    }
+
+    function setError(fieldId, errId, show) {
+      const field = document.getElementById(fieldId);
+      const msg = document.getElementById(errId);
+      if (show) {
+        field.classList.add('error');
+        msg.classList.add('visible');
+      } else {
+        field.classList.remove('error');
+        msg.classList.remove('visible');
+      }
+    }
+
+    // ============================================================
+    // SUBMISSION
+    // ============================================================
+    async function submitForm() {
+      const nameEl = document.getElementById('field-name');
+      const businessEl = document.getElementById('field-business');
+      const emailEl = document.getElementById('field-email');
+      const btn = document.getElementById('submit-btn');
+
+      const fullName = nameEl.value.trim();
+      const businessName = businessEl.value.trim();
+      const email = emailEl.value.trim();
+
+      // Validate
+      let hasError = false;
+      if (!fullName) { setError('field-name', 'err-name', true); hasError = true; }
+      else { setError('field-name', 'err-name', false); }
+
+      if (!businessName) { setError('field-business', 'err-business', true); hasError = true; }
+      else { setError('field-business', 'err-business', false); }
+
+      if (!isValidEmail(email)) { setError('field-email', 'err-email', true); hasError = true; }
+      else { setError('field-email', 'err-email', false); }
+
+      if (hasError) return;
+
+      // Build payload
+      const payload = {
+        name: fullName,
+        business_name: businessName,
+        email: email,
+        q1_data_structure: answers.q1,
+        q2_consultant_history: answers.q2,
+        q3_tech_stack: answers.q3,
+        q4_data_usage: answers.q4,
+        q5_ai_automation: answers.q5,
+        q6_priority: answers.q6,
+      };
+
+      // Update button state
+      btn.disabled = true;
+      btn.innerHTML = 'Sending&hellip;';
+
+      try {
+        // 1. Insert into Supabase
+        const supaRes = await fetch(`${SUPABASE_URL}/rest/v1/src_lead_magnet`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!supaRes.ok) {
+          // Log for debugging but don't block the user
+          console.error('Supabase insert failed:', supaRes.status, await supaRes.text());
+        }
+
+        // 2. Fire n8n webhook — awaited so the request completes before
+        //    the screen transitions (browsers abort in-flight fetches on navigation)
+        try {
+          const webhookRes = await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (!webhookRes.ok) {
+            console.warn('Webhook responded with', webhookRes.status);
+          }
+        } catch (webhookErr) {
+          // Non-critical — log but don't block the user
+          console.warn('Webhook failed (non-critical):', webhookErr);
+        }
+
+      } catch (err) {
+        console.error('Submission error:', err);
+        // Still show thank you — don't punish the user for a network blip
+      }
+
+      // 3. Show Thank You screen
+      goTo(8, 'forward');
+    }
+
+    // ============================================================
+    // KEYBOARD: Enter key support on capture form
+    // ============================================================
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && currentScreen === 7) {
+        submitForm();
+      }
+    });
+
+    // ============================================================
+    // CLEAR errors on input
+    // ============================================================
+    document.getElementById('field-name').addEventListener('input', () => {
+      setError('field-name', 'err-name', false);
+    });
+    document.getElementById('field-business').addEventListener('input', () => {
+      setError('field-business', 'err-business', false);
+    });
+    document.getElementById('field-email').addEventListener('input', () => {
+      setError('field-email', 'err-email', false);
+    });
+  </script>
+
+</body>
+
+</html>
