@@ -2,14 +2,24 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import { SanityIcon } from "../elements/sanity-icon";
 import { supabase } from "@/lib/supabase";
 
 type InquiryFormSectionProps = any;
 
-export function InquiryFormSection({
+export function InquiryFormSection(props: InquiryFormSectionProps) {
+  // useSearchParams() requires a Suspense boundary to prerender. Read more:
+  // https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+  return (
+    <Suspense fallback={null}>
+      <InquiryFormSectionContent {...props} />
+    </Suspense>
+  );
+}
+
+function InquiryFormSectionContent({
   title,
   description,
   inquiryLabel = "How can we help?",
