@@ -65,9 +65,11 @@ function extractPlainTextFromRichText(
 // Utility function to safely render JSON-LD
 export function JsonLdScript<T>({ data, id }: { data: T; id: string }) {
   return (
-    <script id={id} type="application/ld+json">
-      {JSON.stringify(data, null, 0)}
-    </script>
+    <script
+      id={id}
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data, null, 2) }}
+    />
   );
 }
 
