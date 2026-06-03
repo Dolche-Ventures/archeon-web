@@ -111,48 +111,45 @@ function MediaSection({ data }: { data: any }) {
 }
 
 function FeatureCardsSection({ data }: { data: any }) {
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   if (!data?.cards?.length) return null;
   return (
     <section className="py-12 md:py-24">
       <div className="container mx-auto px-4 md:px-6">
         {data.heading && <h2 className="text-balance font-semibold text-2xl leading-tight md:text-4xl mb-8 md:mb-10 text-center">{data.heading}</h2>}
         <div className="mx-auto grid max-w-5xl gap-5 md:gap-6 sm:grid-cols-2">
-          {data.cards.map((card: any, i: number) => {
-            const isOpen = expandedIndex === i;
-            return (
-              <div
-                key={i}
-                className="group relative flex h-full cursor-pointer flex-col rounded-2xl border border-border/30 bg-gradient-to-br from-zinc-100 to-zinc-200 p-5 transition-all duration-500 hover:-translate-y-2 hover:border-foreground/20 hover:shadow-2xl hover:shadow-foreground/10 dark:from-zinc-800 dark:to-zinc-900/50 md:p-6"
-                onClick={() => setExpandedIndex(isOpen ? null : i)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setExpandedIndex(isOpen ? null : i); } }}
-                role="button"
-                tabIndex={0}
-              >
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-foreground/0 via-foreground/0 to-foreground/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                {card.icon && (
-                  <span className="relative mb-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-foreground/10 text-base transition-all duration-500 group-hover:scale-110 group-hover:bg-foreground/15 md:mb-4 md:h-10 md:w-10 md:text-lg">
-                    {card.icon}
-                  </span>
-                )}
-                <h3 className="relative font-semibold text-base md:text-lg mb-1.5">{card.title}</h3>
+          {data.cards.map((card: any, i: number) => (
+            <div
+              key={i}
+              className="group relative flex h-full flex-col rounded-2xl border border-border/30 bg-gradient-to-br from-zinc-100 to-zinc-200 p-5 transition-all duration-500 hover:-translate-y-2 hover:border-foreground/20 hover:shadow-2xl hover:shadow-foreground/10 dark:from-zinc-800 dark:to-zinc-900/50 md:p-6"
+            >
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-foreground/0 via-foreground/0 to-foreground/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+              {card.icon && (
+                <span className="relative mb-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-foreground/10 text-base transition-all duration-500 group-hover:scale-110 group-hover:bg-foreground/15 md:mb-4 md:h-10 md:w-10 md:text-lg">
+                  {card.icon}
+                </span>
+              )}
+              <h3 className="relative font-semibold text-base md:text-lg mb-1.5">{card.title}</h3>
+              <div className="flex flex-1 flex-col justify-start">
                 {card.description && (
                   <p className="relative text-sm text-muted-foreground leading-relaxed">
                     {card.description}
                   </p>
                 )}
                 {card.expandedDescription && (
-                  <div
-                    className={`relative mt-2 grid transition-all duration-500 md:group-hover:grid-rows-[1fr] md:group-hover:opacity-100 ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
-                  >
+                  <div className="relative mt-2 grid grid-rows-[1fr] opacity-100">
                     <div className="overflow-hidden border-t border-border/20 pt-2 md:pt-3">
+                      {card.expandedTitle && (
+                        <h4 className="mb-2 text-sm font-semibold text-foreground md:text-base">
+                          {card.expandedTitle}
+                        </h4>
+                      )}
                       <RichText className="text-sm text-muted-foreground/80 leading-relaxed [&_p]:mb-2" richText={card.expandedDescription} />
                     </div>
                   </div>
                 )}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -175,7 +172,7 @@ function TechStackSection({ data }: { data: any }) {
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-muted/30 p-2 transition-all duration-300 md:h-20 md:w-20 md:p-4">
                 {layer.logo?.id ? (
                   <SanityImage
-                    className="h-full w-full object-contain grayscale transition-all duration-300 group-hover:grayscale-0"
+                    className="h-full w-full object-contain transition-all duration-300"
                     height={48}
                     image={layer.logo}
                     loading="lazy"

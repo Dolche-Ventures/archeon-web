@@ -11,6 +11,7 @@ import { CredentialsHero } from "./sections/credentials-hero";
 import { CredentialsTechStack } from "./sections/credentials-tech-stack";
 import { CTABlock } from "./sections/cta";
 import { FaqAccordion } from "./sections/faq-accordion";
+import { QuizBlock } from "./sections/quiz-block";
 import { FeatureCardsWithCTAIcon } from "./sections/feature-cards-with-cta";
 import { FeatureCardsWithIcon } from "./sections/feature-cards-with-icon";
 import { HeroBlock } from "./sections/hero";
@@ -59,6 +60,7 @@ const BLOCK_COMPONENTS = {
   richTextBlock: RichTextBlock,
   valuePropositionSection: ValuePropositionSection,
   csIndividualCaseStudy: CSIndividualCaseStudyBlock,
+  quizBlock: QuizBlock,
   // biome-ignore lint/suspicious/noExplicitAny: <any is used to allow for dynamic component rendering>
 } as const satisfies Record<PageBuilderBlockTypes, React.ComponentType<any>>;
 

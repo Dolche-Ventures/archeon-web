@@ -63,7 +63,7 @@ function TechItemCard({ item }: { item: TechItem }) {
             alt={name || "Tech logo"}
             width={48}
             height={48}
-            className="h-full w-full object-contain grayscale transition-all duration-300 group-hover:grayscale-0"
+            className="h-full w-full object-contain transition-all duration-300"
           />
         ) : (
           <span className="text-center text-xs font-medium text-muted-foreground">

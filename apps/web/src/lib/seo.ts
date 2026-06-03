@@ -31,10 +31,10 @@ type OgImageParams = {
 
 // Default site configuration
 const siteConfig: SiteConfig = {
-  title: "Roboto Studio Demo",
-  description: "Roboto Studio Demo",
-  twitterHandle: "@studioroboto",
-  keywords: ["roboto", "studio", "demo", "sanity", "next", "react", "template"],
+  title: "Archeon Consulting",
+  description: "Archeon Consulting",
+  twitterHandle: "@archeonconsulting",
+  keywords: ["archeon", "consulting", "data", "analytics", "engineering"],
 };
 
 function generateOgImageUrl(params: OgImageParams = {}): string {

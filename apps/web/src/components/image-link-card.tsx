@@ -27,7 +27,7 @@ export function CTACard({ card, className }: CTACardProps) {
       {image?.id && (
         <div className="relative h-[260px] min-h-[260px] max-h-[260px] w-full shrink-0 overflow-hidden">
           <SanityImage
-            className="block h-full w-full object-cover opacity-70 grayscale transition-all duration-700 group-hover:opacity-100 group-hover:grayscale-0 dark:opacity-60 dark:group-hover:opacity-90"
+            className="block h-full w-full object-cover transition-all duration-700"
             height={1080}
             image={image}
             loading="lazy"

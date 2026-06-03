@@ -11,7 +11,7 @@ type ImageFeatureCardsProps = PagebuilderType<"imageFeatureCards">;
 type CardWithVideo = any;
 
 function FeatureCard({ card }: { card: CardWithVideo }) {
-  const { title, video, richText, extendedContent, href } = card ?? {};
+  const { title, video, richText, extendedTitle, extendedContent, href } = card ?? {};
   const videoUrl = video?.asset?.url ?? null;
   const hasExtended = extendedContent && extendedContent.length > 0;
 
@@ -30,32 +30,39 @@ function FeatureCard({ card }: { card: CardWithVideo }) {
           <div className="absolute inset-0 bg-black/30" />
         </div>
       )}
-      <div className="relative flex min-h-[130px] flex-col items-center text-center px-5 py-4 bg-gradient-to-b from-black/60 to-black/80 dark:from-black/60 dark:to-black/80 transition-all duration-500">
+      <div className="relative flex min-h-[130px] flex-1 flex-col items-center text-center px-5 py-4 bg-gradient-to-b from-black/60 to-black/80 dark:from-black/60 dark:to-black/80 transition-all duration-500">
         {title && (
           <h3 className="mb-1 text-base font-semibold text-white shrink-0">{title}</h3>
         )}
-        {richText && (
-          <RichText
-            className="text-xs text-white/70 [&_p]:text-white/70 [&_p]:leading-relaxed [&_li]:text-white/70"
-            richText={richText}
-          />
-        )}
-        {hasExtended && (
-          <div className="w-full overflow-hidden transition-all duration-500 max-h-0 group-hover:max-h-96">
-            <div className="border-t border-white/10 mt-3 pt-3">
-              <RichText
-                className="text-xs text-white/60 [&_p]:text-white/60 [&_p]:leading-relaxed [&_li]:text-white/60"
-                richText={extendedContent}
-              />
+        <div className="flex w-full flex-1 flex-col justify-start">
+          {richText && (
+            <RichText
+              className="text-xs text-white/70 [&_p]:text-white/70 [&_p]:leading-relaxed [&_li]:text-white/70"
+              richText={richText}
+            />
+          )}
+          {hasExtended && (
+            <div className="w-full overflow-hidden">
+              <div className="border-t border-white/10 mt-3 pt-3">
+                {extendedTitle && (
+                  <h4 className="mb-2 text-xs font-semibold text-white/80">
+                    {extendedTitle}
+                  </h4>
+                )}
+                <RichText
+                  className="text-xs text-white/60 [&_p]:text-white/60 [&_p]:leading-relaxed [&_li]:text-white/60"
+                  richText={extendedContent}
+                />
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </>
   );
 
   const cardClasses =
-    "group relative flex flex-col w-full overflow-hidden rounded-2xl transition-all duration-500 hover:-translate-y-1";
+    "group relative flex h-full flex-col w-full overflow-hidden rounded-2xl transition-all duration-500 hover:-translate-y-1";
 
   if (href) {
     return (
@@ -97,7 +104,7 @@ export function ImageFeatureCards({
         <AnimatedBlock delay={100}>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {cards?.map((card, index) => (
-              <AnimatedBlock key={index} delay={index * 100}>
+              <AnimatedBlock key={index} delay={index * 100} className="h-full">
                 <FeatureCard card={card} />
               </AnimatedBlock>
             ))}

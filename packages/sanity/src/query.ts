@@ -180,6 +180,20 @@ const subscribeNewsletterBlock = /* groq */ `
   }
 `;
 
+const quizBlockFragment = /* groq */ `
+  _type == "quizBlock" => {
+    ...,
+    "bookCallUrl": bookCallUrl{
+      "openInNewTab": openInNewTab,
+      "href": select(
+        type == "internal" => internal->slug.current,
+        type == "external" => external,
+        href
+      )
+    }
+  }
+`;
+
 const featureCardsIconBlock = /* groq */ `
   _type == "featureCardsIcon" => {
     ...,
@@ -298,7 +312,10 @@ const servicePillarsSectionBlock = /* groq */ `
           external,
           anchor
         }
-      })
+      }),
+      ctaTitle,
+      ctaDescription,
+      ${buttonsFragment}
     })
   }
 `;
@@ -404,7 +421,8 @@ const pageBuilderFragment = /* groq */ `
     ${servicePillarsSectionBlock},
     ${valuePropositionSectionBlock},
     ${caseStudiesHeroBlock},
-    ${caseStudyEditorialBlocks}
+    ${caseStudyEditorialBlocks},
+    ${quizBlockFragment}
   }
 `;
 

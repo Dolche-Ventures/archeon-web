@@ -4,6 +4,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { useEffect, useState } from "react";
 
 import { AnimatedBlock } from "@/hooks/use-data-assembly";
+import { SanityButtons } from "../elements/sanity-buttons";
 
 type ServicePillarsSectionProps = any;
 type SubService = any;
@@ -140,72 +141,93 @@ export function ServicePillarsSection({
                       )}
                     </div>
 
-                      <div
-                        className={`relative rounded-2xl border border-border/30 bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900/50 p-8 shadow-lg shadow-zinc-500/5 transition-all duration-300 ease-in-out ${
-                          isAnimating
-                            ? "opacity-0 translate-y-2"
-                            : "opacity-100 translate-y-0"
-                        }`}
-                      >
-                        {selectedSubServiceData ? (
-                          <>
-                            <p className="text-xs text-muted-foreground/60 tracking-widest mb-2">
-                              SERVICE
+                    <div
+                      className={`relative rounded-2xl border border-border/30 bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900/50 p-8 shadow-lg shadow-zinc-500/5 transition-all duration-300 ease-in-out ${
+                        isAnimating
+                          ? "opacity-0 translate-y-2"
+                          : "opacity-100 translate-y-0"
+                      }`}
+                    >
+                      {selectedSubServiceData ? (
+                        <>
+                          <p className="text-xs text-muted-foreground/60 tracking-widest mb-2">
+                            SERVICE
+                          </p>
+                          <h4 className="text-xl font-semibold text-foreground mb-4">
+                            {selectedSubServiceData.title}
+                          </h4>
+                          <div className="border-b border-border mb-4" />
+                          {selectedSubServiceData.description ? (
+                            <ul className="space-y-1.5 list-disc list-inside text-sm text-muted-foreground leading-relaxed">
+                              {selectedSubServiceData.description
+                                .split("\n")
+                                .filter((l: string) => l.trim())
+                                .map((line: string, i: number) => (
+                                  <li key={i}>
+                                    {line.trim().replace(/^[-•*]\s*/, "")}
+                                  </li>
+                                ))}
+                            </ul>
+                          ) : (
+                            <p className="text-sm text-muted-foreground italic">
+                              No description added yet
                             </p>
-                            <h4 className="text-xl font-semibold text-foreground mb-4">
-                              {selectedSubServiceData.title}
-                            </h4>
-                            <div className="border-b border-border mb-4" />
-                            {selectedSubServiceData.description ? (
-                              <ul className="space-y-1.5 list-disc list-inside text-sm text-muted-foreground leading-relaxed">
-                                {selectedSubServiceData.description
-                                  .split("\n")
-                                  .filter((l: string) => l.trim())
-                                  .map((line: string, i: number) => (
-                                    <li key={i}>
-                                      {line.trim().replace(/^[-•*]\s*/, "")}
-                                    </li>
-                                  ))}
-                              </ul>
-                            ) : (
-                              <p className="text-sm text-muted-foreground italic">
-                                No description added yet
-                              </p>
+                          )}
+                          {(selectedSubServiceData as SubService)?.ctaText &&
+                            (selectedSubServiceData as SubService)?.ctaLink && (
+                              <a
+                                href={`/send-an-inquiry?service=${encodeURIComponent(((selectedSubServiceData as SubService)?.title || "").replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u2060-\u2064]/g, ""))}`}
+                                target={
+                                  (
+                                    (selectedSubServiceData as SubService)
+                                      .ctaLink as any
+                                  )?.openInNewTab
+                                    ? "_blank"
+                                    : undefined
+                                }
+                                rel={
+                                  (
+                                    (selectedSubServiceData as SubService)
+                                      .ctaLink as any
+                                  )?.openInNewTab
+                                    ? "noopener noreferrer"
+                                    : undefined
+                                }
+                                className="mt-6 inline-block text-sm text-foreground hover:underline"
+                              >
+                                {(selectedSubServiceData as SubService).ctaText}{" "}
+                                →
+                              </a>
                             )}
-                            {(selectedSubServiceData as SubService)?.ctaText &&
-                              (selectedSubServiceData as SubService)?.ctaLink && (
-                                <a
-                                  href={`/send-an-inquiry?service=${encodeURIComponent(((selectedSubServiceData as SubService)?.title || "").replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u2060-\u2064]/g, ""))}`}
-                                  target={
-                                    (
-                                      (selectedSubServiceData as SubService)
-                                        .ctaLink as any
-                                    )?.openInNewTab
-                                      ? "_blank"
-                                      : undefined
-                                  }
-                                  rel={
-                                    (
-                                      (selectedSubServiceData as SubService)
-                                        .ctaLink as any
-                                    )?.openInNewTab
-                                      ? "noopener noreferrer"
-                                      : undefined
-                                  }
-                                  className="mt-6 inline-block text-sm text-foreground hover:underline"
-                                >
-                                  {(selectedSubServiceData as SubService).ctaText}{" "}
-                                  →
-                                </a>
-                              )}
-                          </>
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-muted-foreground">
-                            Select a service
-                          </div>
-                        )}
-                      </div>
+                        </>
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-muted-foreground">
+                          Select a service
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  {(pillar?.ctaTitle || pillar?.ctaDescription || pillar?.buttons?.length) && (
+                    <div className="mt-12 flex flex-col items-center text-center">
+                      {pillar.ctaTitle && (
+                        <h4 className="text-xl font-semibold md:text-2xl text-foreground">
+                          {pillar.ctaTitle}
+                        </h4>
+                      )}
+                      {pillar.ctaDescription && (
+                        <p className="mt-3 max-w-lg text-muted-foreground">
+                          {pillar.ctaDescription}
+                        </p>
+                      )}
+                      {pillar?.buttons?.length && (
+                        <div className="mt-5">
+                          <SanityButtons buttons={pillar.buttons} />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {!isLast && (
                     <div className="h-px w-full bg-gradient-to-r from-transparent via-border to-transparent my-12" />
                   )}
