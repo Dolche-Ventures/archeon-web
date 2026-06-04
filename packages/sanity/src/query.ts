@@ -194,20 +194,6 @@ const quizBlockFragment = /* groq */ `
   }
 `;
 
-const quizBlockFragment = /* groq */ `
-  _type == "quizBlock" => {
-    ...,
-    "bookCallUrl": bookCallUrl{
-      "openInNewTab": openInNewTab,
-      "href": select(
-        type == "internal" => internal->slug.current,
-        type == "external" => external,
-        href
-      )
-    }
-  }
-`;
-
 const featureCardsIconBlock = /* groq */ `
   _type == "featureCardsIcon" => {
     ...,
