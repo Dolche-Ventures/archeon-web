@@ -1,13 +1,9 @@
 "use client";
 
+import { env } from "@workspace/env/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { PagebuilderType } from "@/types";
-
-const SUPABASE_URL = "https://isyygjaviypkemhgquhj.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzeXlnamF2aXlwa2VtaGdxdWhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MjU3NzQsImV4cCI6MjA4NjUwMTc3NH0.OJs-ppULDuUWABE6mY143o6jYpacw1SCGsIw0K4SpkE";
-const WEBHOOK_URL = "https://api.dolche.ventures/webhook/archeon-quiz";
 
 const STATUS_COLORS: Record<string, string> = {
   green: "#22C55E",
@@ -16,20 +12,21 @@ const STATUS_COLORS: Record<string, string> = {
   neutral: "#6B7280",
 };
 
-const QUESTIONS_META = [
-  { key: "q1", selectType: "single" as const },
-  { key: "q2", selectType: "single" as const },
-  { key: "q3", selectType: "multi" as const },
-  { key: "q4", selectType: "single" as const },
-  { key: "q5", selectType: "single" as const },
-  { key: "q6", selectType: "single" as const },
-];
-
 type QuizOption = {
   label?: string;
   value?: string;
   statusColor?: string;
 };
+
+type QuizQuestion = {
+  _key?: string;
+  title?: string;
+  provocativeText?: string;
+  selectType?: "single" | "multi";
+  options?: QuizOption[];
+};
+
+type Answers = Record<string, string | string[] | null>;
 
 type QuizBlockProps = PagebuilderType<"quizBlock">;
 
@@ -39,24 +36,7 @@ export function QuizBlock(props: QuizBlockProps) {
     introHeading,
     introSubheading,
     introButtonText,
-    q1_title,
-    q1_provocative,
-    q1_options,
-    q2_title,
-    q2_provocative,
-    q2_options,
-    q3_title,
-    q3_provocative,
-    q3_options,
-    q4_title,
-    q4_provocative,
-    q4_options,
-    q5_title,
-    q5_provocative,
-    q5_options,
-    q6_title,
-    q6_provocative,
-    q6_options,
+    questions: rawQuestions,
     captureHeading,
     captureSubheading,
     captureButtonText,
@@ -67,22 +47,16 @@ export function QuizBlock(props: QuizBlockProps) {
     bookCallUrl,
   } = props;
 
-  const questions = [
-    { title: q1_title, provocativeText: q1_provocative, options: q1_options, selectType: "single" },
-    { title: q2_title, provocativeText: q2_provocative, options: q2_options, selectType: "single" },
-    { title: q3_title, provocativeText: q3_provocative, options: q3_options, selectType: "multi" },
-    { title: q4_title, provocativeText: q4_provocative, options: q4_options, selectType: "single" },
-    { title: q5_title, provocativeText: q5_provocative, options: q5_options, selectType: "single" },
-    { title: q6_title, provocativeText: q6_provocative, options: q6_options, selectType: "single" },
-  ];
+  const questions: QuizQuestion[] = (rawQuestions as QuizQuestion[] | undefined) ?? [];
+  const questionCount = questions.length;
+  const lastQuestion = questionCount;
 
   const [currentScreen, setCurrentScreen] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, any>>({
-    q1: null, q2: null, q3: [], q4: null, q5: null, q6: null,
-  });
+  const [answers, setAnswers] = useState<Answers>({});
   const [form, setForm] = useState({ name: "", business: "", email: "" });
   const [errors, setErrors] = useState({ name: false, business: false, email: false });
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
 
   const goTo = useCallback((target: number) => setCurrentScreen(target), []);
@@ -90,9 +64,12 @@ export function QuizBlock(props: QuizBlockProps) {
   const isActive = (index: number) => currentScreen === index;
 
   const progressPercent =
-    currentScreen >= 1 && currentScreen <= 6
-      ? (currentScreen / 6) * 100
+    currentScreen >= 1 && currentScreen <= questionCount
+      ? (currentScreen / questionCount) * 100
       : 0;
+
+  const captureScreenNum = questionCount + 1;
+  const thankYouScreenNum = questionCount + 2;
 
   useEffect(() => {
     const handleHash = () => {
@@ -104,6 +81,10 @@ export function QuizBlock(props: QuizBlockProps) {
     };
     setTimeout(handleHash, 500);
   }, []);
+
+  if (questionCount === 0) {
+    return null;
+  }
 
   return (
     <>
@@ -144,12 +125,14 @@ export function QuizBlock(props: QuizBlockProps) {
         .quiz-btn-back svg { width: 14px; height: 14px; flex-shrink: 0; }
         .quiz-fine-print { font-size: 0.78rem; color: var(--color-muted-foreground); line-height: 1.5; margin-top: 14px; }
         .quiz-geo-accent { width: 64px; height: 64px; margin-bottom: 28px; flex-shrink: 0; }
+        .quiz-submit-error { font-size: 0.82rem; color: #EF4444; margin-top: 12px; text-align: center; }
+        .quiz-submit-error button { background: none; border: none; color: #EF4444; text-decoration: underline; cursor: pointer; font-size: 0.82rem; padding: 0; margin: 0; font-family: inherit; }
         @media (max-width: 480px) { .quiz-screen { padding: 24px 18px; } .quiz-btn-primary { width: 100%; justify-content: center; } }
         @media (max-height: 600px) { .quiz-screen { justify-content: flex-start; padding-top: 48px; } }
       `}</style>
 
       <div className="quiz-root">
-        {currentScreen >= 1 && currentScreen <= 6 && (
+        {currentScreen >= 1 && currentScreen <= questionCount && (
           <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: 2, background: "var(--color-border, #404040)", zIndex: 100 }}>
             <div style={{ height: "100%", background: "var(--color-primary)", width: `${progressPercent}%`, transition: "width 320ms ease-out" }} />
           </div>
@@ -170,12 +153,12 @@ export function QuizBlock(props: QuizBlockProps) {
             </div>
           </div>
 
-          {/* QUESTIONS 1-6 */}
+          {/* QUESTIONS */}
           {questions.map((q, i) => {
             const screenNum = i + 1;
             const questionKey = `q${screenNum}`;
-            const isMulti = QUESTIONS_META[i]?.selectType === "multi";
-            const options = (q.options as QuizOption[] | undefined) ?? [];
+            const isMulti = q.selectType === "multi";
+            const options = q.options ?? [];
 
             const handleSingleSelect = (value: string) => {
               setAnswers((prev) => ({ ...prev, [questionKey]: value }));
@@ -183,11 +166,11 @@ export function QuizBlock(props: QuizBlockProps) {
             };
 
             const handleMultiToggle = (value: string) => {
-              const current: string[] = answers[questionKey] || [];
+              const current = answers[questionKey] as string[] | undefined;
               if (value === "None of the above") {
                 setAnswers((prev) => ({ ...prev, [questionKey]: ["None of the above"] }));
               } else {
-                const withoutNone = current.filter((v) => v !== "None of the above");
+                const withoutNone = (current ?? []).filter((v) => v !== "None of the above");
                 const idx = withoutNone.indexOf(value);
                 const next = idx >= 0 ? withoutNone.filter((v) => v !== value) : [...withoutNone, value];
                 setAnswers((prev) => ({ ...prev, [questionKey]: next }));
@@ -195,18 +178,20 @@ export function QuizBlock(props: QuizBlockProps) {
             };
 
             const isSelected = (value: string) =>
-              isMulti ? (answers[questionKey] || []).includes(value) : answers[questionKey] === value;
+              isMulti
+                ? ((answers[questionKey] as string[] | undefined) ?? []).includes(value)
+                : answers[questionKey] === value;
 
-            const canContinue = isMulti ? (answers[questionKey] || []).length > 0 : true;
+            const canContinue = isMulti ? ((answers[questionKey] as string[] | undefined) ?? []).length > 0 : true;
 
             return (
-              <div key={screenNum} className={`quiz-screen ${isActive(screenNum) ? "active" : ""}`} style={{ position: "absolute", inset: 0 }}>
+              <div key={q._key ?? screenNum} className={`quiz-screen ${isActive(screenNum) ? "active" : ""}`} style={{ position: "absolute", inset: 0 }}>
                 <div className="quiz-card">
                   <button className="quiz-btn-back" onClick={() => goTo(screenNum - 1)}>
                     <svg viewBox="0 0 14 14" fill="none"><path d="M11 7H3M6 3L2 7l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     Back
                   </button>
-                  <div className="quiz-label-step">Question {screenNum} of 6</div>
+                  <div className="quiz-label-step">Question {screenNum} of {questionCount}</div>
                   <h2 style={{ fontFamily: "var(--font-heading, Geist, sans-serif)", fontSize: "clamp(1.35rem, 3vw, 1.875rem)", fontWeight: 700, lineHeight: 1.2, color: "var(--color-foreground)", letterSpacing: "-0.015em" }}>{q.title}</h2>
                   {q.provocativeText && (
                     <p style={{ fontSize: "0.875rem", color: "var(--color-muted-foreground)", fontStyle: "italic", marginTop: 8, marginBottom: 28 }}>{q.provocativeText}</p>
@@ -239,9 +224,9 @@ export function QuizBlock(props: QuizBlockProps) {
           })}
 
           {/* CAPTURE SCREEN */}
-          <div className={`quiz-screen ${isActive(7) ? "active" : ""}`} style={{ position: "absolute", inset: 0 }}>
+          <div className={`quiz-screen ${isActive(captureScreenNum) ? "active" : ""}`} style={{ position: "absolute", inset: 0 }}>
             <div className="quiz-card">
-              <button className="quiz-btn-back" onClick={() => goTo(6)}>
+              <button className="quiz-btn-back" onClick={() => goTo(lastQuestion)}>
                 <svg viewBox="0 0 14 14" fill="none"><path d="M11 7H3M6 3L2 7l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 Back
               </button>
@@ -255,6 +240,12 @@ export function QuizBlock(props: QuizBlockProps) {
                 <input className={`quiz-form-input ${errors.email ? "error" : ""}`} type="email" placeholder="Work email" autoComplete="email" value={form.email} onChange={(e) => { setForm((p) => ({ ...p, email: e.target.value })); setErrors((p) => ({ ...p, email: false })); }} />
                 <span className={`quiz-error-msg ${errors.email ? "visible" : ""}`}>Please enter a valid work email.</span>
               </div>
+              {submitError && (
+                <p className="quiz-submit-error">
+                  Something went wrong.{" "}
+                  <button onClick={() => { setSubmitError(false); setSubmitting(false); }}>Try again</button>
+                </p>
+              )}
               <button className="quiz-btn-primary" disabled={submitting} onClick={async () => {
                 const name = form.name.trim();
                 const business = form.business.trim();
@@ -266,10 +257,24 @@ export function QuizBlock(props: QuizBlockProps) {
                 if (!emailRegex.test(email)) { setErrors((p) => ({ ...p, email: true })); hasError = true; }
                 if (hasError) return;
                 setSubmitting(true);
-                const payload = { name, business_name: business, email, q1_data_structure: answers.q1, q2_consultant_history: answers.q2, q3_tech_stack: answers.q3, q4_data_usage: answers.q4, q5_ai_automation: answers.q5, q6_priority: answers.q6 };
-                try { await fetch(`${SUPABASE_URL}/rest/v1/src_lead_magnet`, { method: "POST", headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json", Prefer: "return=minimal" }, body: JSON.stringify(payload) }); } catch { console.error("Supabase insert failed"); }
-                try { await fetch(WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); } catch { console.warn("Webhook failed (non-critical)"); }
-                goTo(8);
+                setSubmitError(false);
+                const qFields: Record<string, string | string[] | null> = {};
+                questions.forEach((_, i) => {
+                  const key = `q${i + 1}`;
+                  qFields[`${key}_data_structure`] = answers[key] ?? null;
+                });
+                const payload = { name, business_name: business, email, ...qFields };
+                try {
+                  const res = await fetch(`${env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/src_lead_magnet`, { method: "POST", headers: { apikey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY, Authorization: `Bearer ${env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`, "Content-Type": "application/json", Prefer: "return=minimal" }, body: JSON.stringify(payload) });
+                  if (!res.ok && res.status !== 409) { throw new Error(`Supabase responded ${res.status}`); }
+                } catch (err) {
+                  console.error("Supabase insert failed", err);
+                  setSubmitError(true);
+                  setSubmitting(false);
+                  return;
+                }
+                if (env.NEXT_PUBLIC_WEBHOOK_URL) { try { await fetch(env.NEXT_PUBLIC_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); } catch { console.warn("Webhook failed (non-critical)"); } }
+                goTo(thankYouScreenNum);
               }}>
                 {submitting ? "Sending\u2026" : captureButtonText || "Send me my assessment"}
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -279,7 +284,7 @@ export function QuizBlock(props: QuizBlockProps) {
           </div>
 
           {/* THANK YOU SCREEN */}
-          <div className={`quiz-screen ${isActive(8) ? "active" : ""}`} style={{ position: "absolute", inset: 0, textAlign: "center" }}>
+          <div className={`quiz-screen ${isActive(thankYouScreenNum) ? "active" : ""}`} style={{ position: "absolute", inset: 0, textAlign: "center" }}>
             <div className="quiz-card" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               <svg className="quiz-geo-accent" viewBox="0 0 64 64" fill="none">
                 <rect x="8" y="8" width="48" height="48" rx="4" stroke="var(--color-primary)" strokeWidth="1.5" transform="rotate(45 32 32)" strokeDasharray="135" strokeDashoffset="0" />

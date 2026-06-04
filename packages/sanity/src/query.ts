@@ -194,6 +194,20 @@ const quizBlockFragment = /* groq */ `
   }
 `;
 
+const quizBlockFragment = /* groq */ `
+  _type == "quizBlock" => {
+    ...,
+    "bookCallUrl": bookCallUrl{
+      "openInNewTab": openInNewTab,
+      "href": select(
+        type == "internal" => internal->slug.current,
+        type == "external" => external,
+        href
+      )
+    }
+  }
+`;
+
 const featureCardsIconBlock = /* groq */ `
   _type == "featureCardsIcon" => {
     ...,
@@ -641,6 +655,8 @@ export const querySettingsData = defineQuery(`
     _type,
     siteTitle,
     siteDescription,
+    siteKeywords,
+    twitterHandle,
     "logo": logo.asset->url + "?w=80&h=40&dpr=3&fit=max",
     "socialLinks": socialLinks,
     "contactEmail": contactEmail,

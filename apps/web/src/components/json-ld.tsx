@@ -68,7 +68,7 @@ export function JsonLdScript<T>({ data, id }: { data: T; id: string }) {
     <script
       id={id}
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data, null, 2) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data, null, 2).replace(/</g, "\\u003c") }}
     />
   );
 }

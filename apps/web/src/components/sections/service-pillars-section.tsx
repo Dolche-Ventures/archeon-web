@@ -208,7 +208,7 @@ export function ServicePillarsSection({
                     </div>
                   </div>
 
-                  {(pillar?.ctaTitle || pillar?.ctaDescription || pillar?.buttons?.length) && (
+                  {(pillar?.ctaTitle || pillar?.ctaDescription || (pillar?.buttons?.length ?? 0) > 0) && (
                     <div className="mt-12 flex flex-col items-center text-center">
                       {pillar.ctaTitle && (
                         <h4 className="text-xl font-semibold md:text-2xl text-foreground">
@@ -220,7 +220,7 @@ export function ServicePillarsSection({
                           {pillar.ctaDescription}
                         </p>
                       )}
-                      {pillar?.buttons?.length && (
+                      {(pillar?.buttons?.length ?? 0) > 0 && (
                         <div className="mt-5">
                           <SanityButtons buttons={pillar.buttons} />
                         </div>

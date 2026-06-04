@@ -1,7 +1,11 @@
 import { Logger } from "@workspace/logger";
 import { client } from "@workspace/sanity/client";
 import { sanityFetch } from "@workspace/sanity/live";
-import { queryBlogPaths, queryBlogSlugPageData } from "@workspace/sanity/query";
+import {
+  queryBlogPaths,
+  queryBlogSlugPageData,
+  querySettingsData,
+} from "@workspace/sanity/query";
 import { notFound } from "next/navigation";
 
 import { RichText } from "@/components/elements/rich-text";
@@ -53,7 +57,10 @@ export async function generateMetadata({
 }) {
   const { slug } = await params;
   const slugString = `/blog/${slug}`;
-  const { data } = await fetchBlogSlugPageData(slugString);
+  const [{ data }, { data: settings }] = await Promise.all([
+    fetchBlogSlugPageData(slugString),
+    sanityFetch({ query: querySettingsData }),
+  ]);
   return getSEOMetadata({
     title: data?.title ?? data?.seoTitle,
     description: data?.description ?? data?.seoDescription,
@@ -61,6 +68,7 @@ export async function generateMetadata({
     contentId: data?._id,
     contentType: data?._type,
     pageType: "article",
+    settings,
   });
 }
 
