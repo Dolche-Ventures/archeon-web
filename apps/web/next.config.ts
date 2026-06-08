@@ -8,7 +8,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@workspace/ui"],
-  reactCompiler: true,
+  reactCompiler: false,
   experimental: {
     inlineCss: true,
   },

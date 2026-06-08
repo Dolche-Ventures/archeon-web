@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import { SanityIcon } from "../elements/sanity-icon";
 import { supabase } from "@/lib/supabase";
 
 type InquiryFormSectionProps = any;
 
-export function InquiryFormSection({
+function InquiryFormSectionContent({
   title,
   description,
   inquiryLabel = "How can we help?",
@@ -57,7 +57,6 @@ export function InquiryFormSection({
       email: formData.email,
       phone: formData.phone,
       message: formData.message,
-      consented: formData.consent,
     });
 
     if (error) {
@@ -224,5 +223,13 @@ export function InquiryFormSection({
         </div>
       </div>
     </section>
+  );
+}
+
+export function InquiryFormSection(props: InquiryFormSectionProps) {
+  return (
+    <Suspense>
+      <InquiryFormSectionContent {...props} />
+    </Suspense>
   );
 }

@@ -38,17 +38,16 @@ export function FaqAccordion({
           </div>
         </AnimatedBlock>
         <div className="mx-auto my-16 max-w-xl">
-          <AnimatedBlock delay={100}>
-            <Accordion
-              className="w-full"
-              collapsible
-              defaultValue="3"
-              type="single"
-            >
-              {faqs?.map((faq, index) => (
+          <Accordion
+            className="w-full"
+            collapsible
+            defaultValue="3"
+            type="single"
+          >
+            {faqs?.map((faq, index) => (
+              <AnimatedBlock delay={100} key={`AccordionItem-${faq?._id}-${index}`}>
                 <AccordionItem
                   className="py-2"
-                  key={`AccordionItem-${faq?._id}-${index}`}
                   value={faq?._id}
                 >
                   <AccordionTrigger className="group py-2 text-[15px] leading-6 hover:no-underline">
@@ -61,9 +60,9 @@ export function FaqAccordion({
                     />
                   </AccordionContent>
                 </AccordionItem>
-              ))}
-            </Accordion>
-          </AnimatedBlock>
+              </AnimatedBlock>
+            ))}
+          </Accordion>
 
           {link?.href && (
             <AnimatedBlock delay={200}>

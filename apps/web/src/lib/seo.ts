@@ -102,12 +102,13 @@ export function getSEOMetadata(page: PageSeoData = {}): Metadata {
     ...pageOverrides
   } = page;
 
+  const settingsKw = settings?.siteKeywords?.filter(Boolean) as string[] | undefined;
   const resolvedConfig = {
     title: settings?.siteTitle ?? siteConfig.title,
     description: settings?.siteDescription ?? siteConfig.description,
     twitterHandle: settings?.twitterHandle ?? siteConfig.twitterHandle,
     keywords: [
-      ...(settings?.siteKeywords?.filter(Boolean) as string[]) ?? siteConfig.keywords,
+      ...(settingsKw?.length ? settingsKw : siteConfig.keywords),
       ...pageKeywords,
     ],
   };

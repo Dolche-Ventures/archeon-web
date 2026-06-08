@@ -130,8 +130,8 @@ const heroBlock = /* groq */ `
     ...,
     ${imageFragment},
     video {
-      asset {
-        _ref
+      asset->{
+        url
       },
       _type
     },
@@ -276,7 +276,7 @@ const inquiryFormSectionBlock = /* groq */ `
 const imageTextBlockFragment = /* groq */ `
   _type == "imageTextBlock" => {
     ...,
-    ${imageFields},
+    ${imageFragment},
     ${richTextFragment}
   }
 `;

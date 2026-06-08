@@ -94,7 +94,7 @@ export function MobileMenu({ navbarData, settingsData }: NavigationData) {
 
               if (column.type === "column") {
                 const hasActiveChild = column.links?.some(
-                  (link) => pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href))
+                  (link) => link.href && (pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href)))
                 );
 
                 return (

@@ -32,7 +32,7 @@ function DesktopColumnDropdown({
   const pathname = usePathname();
 
   const hasActiveChild = column.links?.some(
-    (link) => pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href))
+    (link) => link.href && (pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href)))
   );
 
   const handleMouseEnter = () => {
@@ -191,10 +191,8 @@ export function Navbar({
             {logo && (
               <Logo
                 alt={siteTitle || ""}
-                height={32}
                 image={logo}
                 priority
-                width={120}
               />
             )}
           </div>

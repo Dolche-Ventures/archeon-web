@@ -8,11 +8,7 @@ import type { PagebuilderType } from "@/types";
 import { RichText } from "../elements/rich-text";
 import { SanityButtons } from "../elements/sanity-buttons";
 
-type HeroBlockProps = PagebuilderType<"hero"> & {
-  title?: string;
-  badge?: string;
-  richText?: unknown[];
-  buttons?: unknown[];
+type HeroBlockProps = Omit<PagebuilderType<"hero">, "video"> & {
   video?: {
     asset?: {
       url?: string;

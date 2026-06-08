@@ -1,7 +1,15 @@
+import { SANITY_BASE_URL } from "@workspace/sanity/image";
 import Image from "next/image";
 
 import type { PagebuilderType } from "@/types";
 import { AnimatedBlock } from "@/hooks/use-data-assembly";
+
+function sanityImageUrl(asset: { _ref: string } | undefined | null): string {
+  if (!asset?._ref) return "";
+  const match = asset._ref.match(/^image-(.+)-(\w+)$/);
+  if (!match) return "";
+  return `${SANITY_BASE_URL}${match[1]}.${match[2]}`;
+}
 
 type CredentialsTechStackProps = PagebuilderType<"credentialsTechStack">;
 
@@ -56,10 +64,7 @@ function TechItemCard({ item }: { item: TechItem }) {
       <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-border/50 bg-muted/30 p-3 transition-all duration-300 md:h-20 md:w-20 md:p-4">
         {logo?.asset ? (
           <Image
-            src={
-              logo?.asset?.url ||
-              `https://cdn.sanity.io/images/${process.env.NEXT_PUBLIC_SANITY_PROJECT_ID}/${process.env.NEXT_PUBLIC_SANITY_DATASET}/${logo?.asset?._ref?.replace("image-", "").replace("-jpg", ".jpg").replace("-png", ".png").replace("-webp", ".webp")}`
-            }
+            src={sanityImageUrl(logo.asset)}
             alt={name || "Tech logo"}
             width={48}
             height={48}

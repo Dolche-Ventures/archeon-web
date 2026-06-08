@@ -233,11 +233,11 @@ export function QuizBlock(props: QuizBlockProps) {
               <h2 style={{ fontFamily: "var(--font-heading, Geist, sans-serif)", fontSize: "clamp(1.35rem, 3vw, 1.875rem)", fontWeight: 700, lineHeight: 1.2, color: "var(--color-foreground)", letterSpacing: "-0.015em" }}>{captureHeading}</h2>
               <p style={{ fontSize: "1rem", color: "var(--color-muted-foreground)", lineHeight: 1.6, marginTop: 14 }}>{captureSubheading}</p>
               <div className="quiz-form-group">
-                <input className={`quiz-form-input ${errors.name ? "error" : ""}`} type="text" placeholder="Full name" autoComplete="name" value={form.name} onChange={(e) => { setForm((p) => ({ ...p, name: e.target.value })); setErrors((p) => ({ ...p, name: false })); }} />
+                <input className={`quiz-form-input ${errors.name ? "error" : ""}`} type="text" placeholder="Full name" autoComplete="name" defaultValue={form.name} onChange={(e) => { setForm((p) => ({ ...p, name: e.target.value })); setErrors((p) => ({ ...p, name: false })); }} />
                 <span className={`quiz-error-msg ${errors.name ? "visible" : ""}`}>Please enter your full name.</span>
-                <input className={`quiz-form-input ${errors.business ? "error" : ""}`} type="text" placeholder="Business name" autoComplete="organization" value={form.business} onChange={(e) => { setForm((p) => ({ ...p, business: e.target.value })); setErrors((p) => ({ ...p, business: false })); }} />
+                <input className={`quiz-form-input ${errors.business ? "error" : ""}`} type="text" placeholder="Business name" autoComplete="organization" defaultValue={form.business} onChange={(e) => { setForm((p) => ({ ...p, business: e.target.value })); setErrors((p) => ({ ...p, business: false })); }} />
                 <span className={`quiz-error-msg ${errors.business ? "visible" : ""}`}>Please enter your business name.</span>
-                <input className={`quiz-form-input ${errors.email ? "error" : ""}`} type="email" placeholder="Work email" autoComplete="email" value={form.email} onChange={(e) => { setForm((p) => ({ ...p, email: e.target.value })); setErrors((p) => ({ ...p, email: false })); }} />
+                <input className={`quiz-form-input ${errors.email ? "error" : ""}`} type="email" placeholder="Work email" autoComplete="email" defaultValue={form.email} onChange={(e) => { setForm((p) => ({ ...p, email: e.target.value })); setErrors((p) => ({ ...p, email: false })); }} />
                 <span className={`quiz-error-msg ${errors.email ? "visible" : ""}`}>Please enter a valid work email.</span>
               </div>
               {submitError && (
@@ -259,14 +259,28 @@ export function QuizBlock(props: QuizBlockProps) {
                 setSubmitting(true);
                 setSubmitError(false);
                 const qFields: Record<string, string | string[] | null> = {};
+                const columnNames = [
+                  "q1_data_structure",
+                  "q2_consultant_history",
+                  "q3_tech_stack",
+                  "q4_data_usage",
+                  "q5_ai_automation",
+                  "q6_priority",
+                ];
+                const arrayColumns = new Set(["q3_tech_stack"]);
                 questions.forEach((_, i) => {
                   const key = `q${i + 1}`;
-                  qFields[`${key}_data_structure`] = answers[key] ?? null;
+                  const colName = columnNames[i] ?? `${key}_data_structure`;
+                  let val = answers[key] ?? null;
+                  if (arrayColumns.has(colName) && typeof val === "string") {
+                    val = [val];
+                  }
+                  qFields[colName] = val;
                 });
                 const payload = { name, business_name: business, email, ...qFields };
                 try {
                   const res = await fetch(`${env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/src_lead_magnet`, { method: "POST", headers: { apikey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY, Authorization: `Bearer ${env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`, "Content-Type": "application/json", Prefer: "return=minimal" }, body: JSON.stringify(payload) });
-                  if (!res.ok && res.status !== 409) { throw new Error(`Supabase responded ${res.status}`); }
+                  if (!res.ok && res.status !== 409) { const body = await res.text().catch(() => "unknown"); throw new Error(`Supabase responded ${res.status}: ${body}`); }
                 } catch (err) {
                   console.error("Supabase insert failed", err);
                   setSubmitError(true);

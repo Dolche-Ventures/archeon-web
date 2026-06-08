@@ -32,9 +32,13 @@ export default async function Page() {
   if (!homePageData) {
     return (
       <HeroBlock
+        _type="hero"
+        _key="hero-fallback"
         title="Welcome to Archeon"
         badge="Turbo + Sanity"
         richText={[]}
+        image={null}
+        buttons={[]}
       />
     );
   }
