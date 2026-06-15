@@ -20,3 +20,6 @@ npm-debug.log*
 *.pem
 .env*.local
 *.tsbuildinfo
+
+# Local AI assistant guidance
+CLAUDE.md

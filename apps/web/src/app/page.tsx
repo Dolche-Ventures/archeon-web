@@ -16,6 +16,7 @@ export async function generateMetadata() {
     fetchHomePageData(),
     sanityFetch({ query: querySettingsData }),
   ]);
+
   return getSEOMetadata({
     title: homePageData?.title ?? homePageData?.seoTitle,
     description: homePageData?.description ?? homePageData?.seoDescription,
@@ -32,13 +33,13 @@ export default async function Page() {
   if (!homePageData) {
     return (
       <HeroBlock
+        _key="home-fallback"
         _type="hero"
-        _key="hero-fallback"
         title="Welcome to Archeon"
         badge="Turbo + Sanity"
-        richText={[]}
-        image={null}
         buttons={[]}
+        image={null}
+        richText={[]}
       />
     );
   }
