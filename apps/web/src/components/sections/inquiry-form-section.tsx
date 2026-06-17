@@ -10,8 +10,6 @@ import { supabase } from "@/lib/supabase";
 type InquiryFormSectionProps = any;
 
 export function InquiryFormSection(props: InquiryFormSectionProps) {
-  // useSearchParams() requires a Suspense boundary to prerender. Read more:
-  // https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
   return (
     <Suspense fallback={null}>
       <InquiryFormSectionContent {...props} />
@@ -67,7 +65,6 @@ function InquiryFormSectionContent({
       email: formData.email,
       phone: formData.phone,
       message: formData.message,
-      consented: formData.consent,
     });
 
     if (error) {
@@ -78,7 +75,13 @@ function InquiryFormSectionContent({
     setSubmitted(true);
     setTimeout(() => {
       setSubmitted(false);
-      setFormData({ fullName: "", email: "", phone: "", message: "", consent: false });
+      setFormData({
+        fullName: "",
+        email: "",
+        phone: "",
+        message: "",
+        consent: false,
+      });
     }, 3000);
   };
 
@@ -123,6 +126,7 @@ function InquiryFormSectionContent({
                     placeholder="John Doe"
                   />
                 </div>
+
                 <div>
                   <span className="mb-2 block text-sm font-medium">
                     Email Address
@@ -135,6 +139,7 @@ function InquiryFormSectionContent({
                     placeholder="john@example.com"
                   />
                 </div>
+
                 <div>
                   <span className="mb-2 block text-sm font-medium">
                     Phone Number
@@ -147,6 +152,7 @@ function InquiryFormSectionContent({
                     placeholder="+1 (555) 000-0000"
                   />
                 </div>
+
                 <div>
                   <span className="mb-2 block text-sm font-medium">
                     {inquiryLabel}
@@ -159,6 +165,7 @@ function InquiryFormSectionContent({
                     placeholder="Tell us about your inquiry..."
                   />
                 </div>
+
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -167,25 +174,23 @@ function InquiryFormSectionContent({
                     className="mt-1 h-4 w-4 shrink-0 rounded border-input"
                   />
                   <span className="text-sm text-muted-foreground leading-relaxed">
-  I agree to the{" "}
-  
-  <Link
-    href="/privacy-policy"
-    className="underline hover:text-foreground transition-colors"
-  >
-    Privacy Policy
-  </Link>
-
-  {" "}and{" "}
-
-  <Link
-    href="/terms-of-service"
-    className="underline hover:text-foreground transition-colors"
-  >
-    Terms and Conditions
-  </Link>
-</span>
+                    I agree to the{" "}
+                    <Link
+                      href="/privacy-policy"
+                      className="underline hover:text-foreground transition-colors"
+                    >
+                      Privacy Policy
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      href="/terms-of-service"
+                      className="underline hover:text-foreground transition-colors"
+                    >
+                      Terms and Conditions
+                    </Link>
+                  </span>
                 </label>
+
                 <button
                   type="button"
                   onClick={handleSubmit}
@@ -193,6 +198,7 @@ function InquiryFormSectionContent({
                 >
                   {buttonText}
                 </button>
+
                 {error && (
                   <p className="text-sm text-red-500 text-center">{error}</p>
                 )}
@@ -206,6 +212,7 @@ function InquiryFormSectionContent({
                 {ctaSectionTitle}
               </h3>
             )}
+
             {buttons && buttons.length > 0 && (
               <div className="space-y-4">
                 {buttons.map((button: any, index: number) => (

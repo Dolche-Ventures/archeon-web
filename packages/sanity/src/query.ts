@@ -129,6 +129,12 @@ const heroBlock = /* groq */ `
   _type == "hero" => {
     ...,
     ${imageFragment},
+    video {
+      asset->{
+        url
+      },
+      _type
+    },
     ${buttonsFragment},
     ${richTextFragment}
   }
@@ -170,6 +176,20 @@ const subscribeNewsletterBlock = /* groq */ `
     "helperText": helperText[]{
       ...,
       ${markDefsFragment}
+    }
+  }
+`;
+
+const quizBlockFragment = /* groq */ `
+  _type == "quizBlock" => {
+    ...,
+    "bookCallUrl": bookCallUrl{
+      "openInNewTab": openInNewTab,
+      "href": select(
+        type == "internal" => internal->slug.current,
+        type == "external" => external,
+        href
+      )
     }
   }
 `;
@@ -292,7 +312,10 @@ const servicePillarsSectionBlock = /* groq */ `
           external,
           anchor
         }
-      })
+      }),
+      ctaTitle,
+      ctaDescription,
+      ${buttonsFragment}
     })
   }
 `;
@@ -398,7 +421,8 @@ const pageBuilderFragment = /* groq */ `
     ${servicePillarsSectionBlock},
     ${valuePropositionSectionBlock},
     ${caseStudiesHeroBlock},
-    ${caseStudyEditorialBlocks}
+    ${caseStudyEditorialBlocks},
+    ${quizBlockFragment}
   }
 `;
 
@@ -617,6 +641,8 @@ export const querySettingsData = defineQuery(`
     _type,
     siteTitle,
     siteDescription,
+    siteKeywords,
+    twitterHandle,
     "logo": logo.asset->url + "?w=80&h=40&dpr=3&fit=max",
     "socialLinks": socialLinks,
     "contactEmail": contactEmail,

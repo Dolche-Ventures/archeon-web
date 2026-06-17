@@ -19,6 +19,7 @@ import { ImageLinkCards } from "./sections/image-link-cards";
 import { ImageTextBlock } from "./sections/image-text-block";
 import { InquiryFormSection } from "./sections/inquiry-form-section";
 import { InquiryHero } from "./sections/inquiry-hero";
+import { QuizBlock } from "./sections/quiz-block";
 import { RichTextBlock } from "./sections/rich-text-block";
 import { ServicePillarsSection } from "./sections/service-pillars-section";
 import { ServicesHero } from "./sections/services-hero";
@@ -59,6 +60,7 @@ const BLOCK_COMPONENTS = {
   richTextBlock: RichTextBlock,
   valuePropositionSection: ValuePropositionSection,
   csIndividualCaseStudy: CSIndividualCaseStudyBlock,
+  quizBlock: QuizBlock,
   // biome-ignore lint/suspicious/noExplicitAny: <any is used to allow for dynamic component rendering>
 } as const satisfies Record<PageBuilderBlockTypes, React.ComponentType<any>>;
 

@@ -1,7 +1,11 @@
 import { Logger } from "@workspace/logger";
 import { client } from "@workspace/sanity/client";
 import { sanityFetch } from "@workspace/sanity/live";
-import { querySlugPageData, querySlugPagePaths } from "@workspace/sanity/query";
+import {
+  querySettingsData,
+  querySlugPageData,
+  querySlugPagePaths,
+} from "@workspace/sanity/query";
 import { notFound } from "next/navigation";
 
 import { PageBuilder } from "@/components/pagebuilder";
@@ -46,7 +50,10 @@ export async function generateMetadata({
 }) {
   const { slug } = await params;
   const slugString = `/${slug.join("/")}`;
-  const { data: pageData } = await fetchSlugPageData(slugString);
+  const [{ data: pageData }, { data: settings }] = await Promise.all([
+    fetchSlugPageData(slugString),
+    sanityFetch({ query: querySettingsData }),
+  ]);
 
   return getSEOMetadata({
     title: pageData?.title ?? pageData?.seoTitle,
@@ -54,6 +61,7 @@ export async function generateMetadata({
     slug: slugString,
     contentId: pageData?._id,
     contentType: pageData?._type,
+    settings,
   });
 }
 

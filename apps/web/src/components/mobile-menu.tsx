@@ -66,14 +66,14 @@ export function MobileMenu({ navbarData, settingsData }: NavigationData) {
           </SheetClose>
         </SheetHeader>
 
-        {/* Navigation items - scrollable */}
         <nav className="flex-1 overflow-y-auto pt-4 grid px-6 gap-1 content-start">
           <Accordion type="single" collapsible>
             {columns?.map((column) => {
               if (column.type === "link") {
                 if (!column.href) return null;
 
-                const isActive = pathname === column.href || 
+                const isActive =
+                  pathname === column.href ||
                   (column.href !== "/" && pathname.startsWith(column.href));
 
                 return (

@@ -53,8 +53,8 @@ export default async function RootLayout({
           <Suspense fallback={<FooterSkeleton />}>
             <FooterServer />
           </Suspense>
-          <SanityLive />
           <CombinedJsonLd settings={settings.data} includeOrganization includeWebsite />
+          <SanityLive />
           {(await draftMode()).isEnabled && (
             <>
               <PreviewBar />

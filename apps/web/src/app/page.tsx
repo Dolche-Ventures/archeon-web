@@ -1,5 +1,5 @@
 import { sanityFetch } from "@workspace/sanity/live";
-import { queryHomePageData } from "@workspace/sanity/query";
+import { queryHomePageData, querySettingsData } from "@workspace/sanity/query";
 
 import { HeroBlock } from "@/components/sections/hero";
 import { PageBuilder } from "@/components/pagebuilder";
@@ -12,13 +12,18 @@ async function fetchHomePageData() {
 }
 
 export async function generateMetadata() {
-  const { data: homePageData } = await fetchHomePageData();
+  const [{ data: homePageData }, { data: settings }] = await Promise.all([
+    fetchHomePageData(),
+    sanityFetch({ query: querySettingsData }),
+  ]);
+
   return getSEOMetadata({
     title: homePageData?.title ?? homePageData?.seoTitle,
     description: homePageData?.description ?? homePageData?.seoDescription,
     slug: "/",
     contentId: homePageData?._id,
     contentType: homePageData?._type,
+    settings,
   });
 }
 
@@ -30,11 +35,11 @@ export default async function Page() {
       <HeroBlock
         _key="home-fallback"
         _type="hero"
+        title="Welcome to Archeon"
         badge="Turbo + Sanity"
         buttons={[]}
         image={null}
         richText={[]}
-        title="Welcome to Archeon"
       />
     );
   }

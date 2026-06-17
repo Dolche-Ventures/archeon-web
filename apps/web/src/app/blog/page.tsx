@@ -3,6 +3,7 @@ import {
   queryBlogIndexPageBlogs,
   queryBlogIndexPageBlogsCount,
   queryBlogIndexPageData,
+  querySettingsData,
 } from "@workspace/sanity/query";
 import { notFound } from "next/navigation";
 
@@ -37,15 +38,17 @@ async function fetchBlogIndexPageBlogsCount() {
 }
 
 export async function generateMetadata() {
-  const { data: result } = await sanityFetch({
-    query: queryBlogIndexPageData,
-  });
+  const [{ data: result }, { data: settings }] = await Promise.all([
+    sanityFetch({ query: queryBlogIndexPageData }),
+    sanityFetch({ query: querySettingsData }),
+  ]);
   return getSEOMetadata({
     title: result?.title ?? result?.seoTitle,
     description: result?.description ?? result?.seoDescription,
     slug: "/blog",
     contentId: result?._id,
     contentType: result?._type,
+    settings,
   });
 }
 

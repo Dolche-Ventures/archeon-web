@@ -21,6 +21,13 @@ interface PageSeoData extends Metadata {
   keywords?: string[];
   seoNoIndex?: boolean;
   pageType?: Extract<Metadata["openGraph"], { type: string }>["type"];
+  /** Override site-wide defaults from Sanity settings */
+  settings?: {
+    siteTitle?: string | null;
+    siteDescription?: string | null;
+    twitterHandle?: string | null;
+    siteKeywords?: (string | null)[] | null;
+  } | null;
 }
 
 // OpenGraph image generation parameters
@@ -31,10 +38,10 @@ type OgImageParams = {
 
 // Default site configuration
 const siteConfig: SiteConfig = {
-  title: "Roboto Studio Demo",
-  description: "Roboto Studio Demo",
-  twitterHandle: "@studioroboto",
-  keywords: ["roboto", "studio", "demo", "sanity", "next", "react", "template"],
+  title: "Archeon Consulting",
+  description: "Archeon Consulting",
+  twitterHandle: "@archeonconsulting",
+  keywords: ["archeon", "consulting", "data", "analytics", "engineering"],
 };
 
 function generateOgImageUrl(params: OgImageParams = {}): string {
@@ -91,8 +98,20 @@ export function getSEOMetadata(page: PageSeoData = {}): Metadata {
     keywords: pageKeywords = [],
     seoNoIndex = false,
     pageType = "website",
+    settings,
     ...pageOverrides
   } = page;
+
+  const settingsKw = settings?.siteKeywords?.filter(Boolean) as string[] | undefined;
+  const resolvedConfig = {
+    title: settings?.siteTitle ?? siteConfig.title,
+    description: settings?.siteDescription ?? siteConfig.description,
+    twitterHandle: settings?.twitterHandle ?? siteConfig.twitterHandle,
+    keywords: [
+      ...(settingsKw?.length ? settingsKw : siteConfig.keywords),
+      ...pageKeywords,
+    ],
+  };
 
   const baseUrl = getBaseUrl();
   const pageUrl = buildPageUrl({ baseUrl, slug });
@@ -101,10 +120,10 @@ export function getSEOMetadata(page: PageSeoData = {}): Metadata {
   const defaultTitle = extractTitle({
     pageTitle,
     slug,
-    siteTitle: siteConfig.title,
+    siteTitle: resolvedConfig.title,
   });
-  const defaultDescription = pageDescription || siteConfig.description;
-  const allKeywords = [...siteConfig.keywords, ...pageKeywords];
+  const defaultDescription = pageDescription || resolvedConfig.description;
+  const allKeywords = resolvedConfig.keywords;
 
   const ogImage = generateOgImageUrl({
     type: contentType,
@@ -112,17 +131,17 @@ export function getSEOMetadata(page: PageSeoData = {}): Metadata {
   });
 
   const fullTitle =
-    defaultTitle === siteConfig.title
+    defaultTitle === resolvedConfig.title
       ? defaultTitle
-      : `${defaultTitle} | ${siteConfig.title}`;
+      : `${defaultTitle} | ${resolvedConfig.title}`;
 
   // Build default metadata object
   const defaultMetadata: Metadata = {
     title: fullTitle,
     description: defaultDescription,
     metadataBase: new URL(baseUrl),
-    creator: siteConfig.title,
-    authors: [{ name: siteConfig.title }],
+    creator: resolvedConfig.title,
+    authors: [{ name: resolvedConfig.title }],
     icons: {
       icon: `${baseUrl}/favicon.ico`,
     },
@@ -131,7 +150,7 @@ export function getSEOMetadata(page: PageSeoData = {}): Metadata {
     twitter: {
       card: "summary_large_image",
       images: [ogImage],
-      creator: siteConfig.twitterHandle,
+      creator: resolvedConfig.twitterHandle,
       title: defaultTitle,
       description: defaultDescription,
     },
